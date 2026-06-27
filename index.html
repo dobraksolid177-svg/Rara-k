@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rara Calc Pro v6.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Efek Glow & Transisi Kustom untuk Tema */
+        .glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .glow-purple { box-shadow: 0 0 20px rgba(147, 51, 234, 0.2); }
+        .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        body { transition: background-color 0.5s, color 0.3s; }
+        .calc-btn { transition: all 0.1s ease; }
+        .calc-btn:active { transform: scale(0.92); }
+    </style>
+</head>
+<body id="bodyBg" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between items-center font-sans p-4 select-none">
+
+    <div id="calcContainer" class="my-auto w-full max-w-md bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-5 shadow-2xl transition-all duration-500 glow-blue">
+        
+        <div class="flex justify-between items-center mb-4 px-1">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600/20 p-1.5 rounded-lg text-blue-400" id="brandIcon">
+                    <i data-lucide="cpu" class="w-4 h-4 animate-pulse"></i>
+                </div>
+                <span class="font-bold text-sm tracking-wide">Rara Calc <span class="text-xs font-medium text-blue-400">v6.0 PRO</span></span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <select id="themeSelector" onchange="changeTheme(this.value)" class="bg-slate-950 border border-slate-800 text-xs rounded-xl p-1.5 outline-none cursor-pointer font-medium text-slate-300">
+                    <option value="cyberpunk">🌌 Cyberpunk</option>
+                    <option value="purple">🔮 Royal Purple</option>
+                    <option value="matrix">📟 Matrix Green</option>
+                    <option value="light">☀️ Snow Light</option>
+                </select>
+                <button onclick="toggleHistory()" class="text-slate-400 hover:text-white transition cursor-pointer" title="Lihat Riwayat">
+                    <i data-lucide="history" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 mb-4 text-right flex flex-col justify-end min-h-[120px] relative overflow-hidden">
+            <div id="modeIndicator" class="absolute left-4 top-3 text-[10px] uppercase font-bold tracking-widest text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">STANDARD</div>
+            <div id="memoryIndicator" class="absolute left-24 top-3 text-[10px] font-bold text-amber-500 hidden">M</div>
+            
+            <div id="previousDisplay" class="text-slate-500 text-sm font-medium tracking-wide h-6 break-all overflow-hidden"></div>
+            <div id="currentDisplay" class="text-4xl font-semibold tracking-tight text-slate-100 mt-1 break-all overflow-hidden">0</div>
+        </div>
+
+        <div class="flex bg-slate-950 p-1 rounded-xl mb-4 border border-slate-800/50">
+            <button id="btnStd" onclick="switchMode('standard')" class="flex-1 text-xs py-2 rounded-lg font-bold transition bg-blue-600 text-white cursor-pointer">Standar</button>
+            <button id="btnSci" onclick="switchMode('scientific')" class="flex-1 text-xs py-2 rounded-lg font-bold transition text-slate-400 hover:text-slate-200 cursor-pointer">Scientific</button>
+        </div>
+
+        <div id="historyPanel" class="hidden mb-4 bg-slate-950/90 border border-slate-800 rounded-2xl p-4 max-h-[160px] overflow-y-auto transition-all">
+            <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Hitungan</span>
+                <button onclick="clearHistory()" class="text-[10px] text-rose-400 hover:underline cursor-pointer">Hapus Semua</button>
+            </div>
+            <div id="historyList" class="space-y-2 text-right text-xs">
+                <p class="text-slate-600 text-center py-2">Belum ada riwayat.</p>
+            </div>
+        </div>
+
+        <div class="space-y-2.5">
+            <div id="scientificPanel" class="grid grid-cols-4 gap-2 hidden animate-fadeIn">
+                <button onclick="appendScientific('Math.sin')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">sin</button>
+                <button onclick="appendScientific('Math.cos')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">cos</button>
+                <button onclick="appendScientific('Math.tan')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">tan</button>
+                <button onclick="appendScientific('Math.sqrt')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">√x</button>
+                <button onclick="appendScientific('Math.log10')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">log</button>
+                <button onclick="appendScientific('Math.log')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">ln</button>
+                <button onclick="appendNumber('Math.PI')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-amber-500 p-2.5 rounded-xl text-xs font-bold cursor-pointer">π</button>
+                <button onclick="appendOperator('**')" class="calc-btn bg-slate-800/30 hover:bg-slate-800/70 text-purple-400 p-2.5 rounded-xl text-xs font-bold cursor-pointer">xʸ</button>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2.5 text-xs font-bold tracking-wide">
+                <button onclick="handleMemory('MC')" class="calc-btn bg-slate-800/20 hover:bg-slate-800/50 text-slate-400 p-2 rounded-xl cursor-pointer">MC</button>
+                <button onclick="handleMemory('MR')" class="calc-btn bg-slate-800/20 hover:bg-slate-800/50 text-slate-400 p-2 rounded-xl cursor-pointer">MR</button>
+                <button onclick="handleMemory('M+')" class="calc-btn bg-slate-800/20 hover:bg-slate-800/50 text-slate-400 p-2 rounded-xl cursor-pointer">M+</button>
+                <button onclick="handleMemory('M-')" class="calc-btn bg-slate-800/20 hover:bg-slate-800/50 text-slate-400 p-2 rounded-xl cursor-pointer">M-</button>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2.5 text-lg">
+                <button onclick="clearAll()" class="calc-btn bg-rose-950/40 hover:bg-rose-900/50 text-rose-400 p-4 rounded-2xl font-bold cursor-pointer">C</button>
+                <button onclick="appendOperator('/')" class="calc-btn btn-op bg-slate-800 hover:bg-slate-700/80 text-blue-400 p-4 rounded-2xl font-bold cursor-pointer">÷</button>
+                <button onclick="appendOperator('*')" class="calc-btn btn-op bg-slate-800 hover:bg-slate-700/80 text-blue-400 p-4 rounded-2xl font-bold cursor-pointer">×</button>
+                <button onclick="deleteLast()" class="calc-btn bg-slate-800 hover:bg-slate-700/80 text-slate-300 p-4 rounded-2xl flex justify-center items-center cursor-pointer">
+                    <i data-lucide="delete" class="w-5 h-5"></i>
+                </button>
+
+                <button onclick="appendNumber('7')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">7</button>
+                <button onclick="appendNumber('8')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">8</button>
+                <button onclick="appendNumber('9')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">9</button>
+                <button onclick="appendOperator('-')" class="calc-btn btn-op bg-slate-800 hover:bg-slate-700/80 text-blue-400 p-4 rounded-2xl font-bold cursor-pointer">−</button>
+
+                <button onclick="appendNumber('4')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">4</button>
+                <button onclick="appendNumber('5')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">5</button>
+                <button onclick="appendNumber('6')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">6</button>
+                <button onclick="appendOperator('+')" class="calc-btn btn-op bg-slate-800 hover:bg-slate-700/80 text-blue-400 p-4 rounded-2xl font-bold cursor-pointer">+</button>
+
+                <button onclick="appendNumber('1')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">1</button>
+                <button onclick="appendNumber('2')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">2</button>
+                <button onclick="appendNumber('3')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl cursor-pointer">3</button>
+                
+                <button id="btnEquals" onclick="calculate()" class="row-span-2 bg-gradient-to-b from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white p-4 rounded-2xl flex justify-center items-center shadow-lg shadow-blue-500/20 font-bold cursor-pointer">=</button>
+
+                <button onclick="appendNumber('0')" class="calc-btn btn-num col-span-2 bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl text-left pl-7 cursor-pointer">0</button>
+                <button onclick="appendNumber('.')" class="calc-btn btn-num bg-slate-800/40 hover:bg-slate-800/80 text-slate-200 p-4 rounded-2xl font-bold cursor-pointer">.</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-xs text-slate-600 tracking-widest font-bold mt-4 uppercase">
+        Rara Systems Engine • Version 6.0 Stable
+    </footer>
+
+    <script>
+        // Aktifkan Ikon Lucide
+        lucide.createIcons();
+
+        const currentDisplay = document.getElementById('currentDisplay');
+        const previousDisplay = document.getElementById('previousDisplay');
+        const historyPanel = document.getElementById('historyPanel');
+        const historyList = document.getElementById('historyList');
+        const scientificPanel = document.getElementById('scientificPanel');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const memoryIndicator = document.getElementById('memoryIndicator');
+        
+        let expression = '';
+        let memoryValue = 0;
+        let historyData = [];
+
+        function updateDisplay() {
+            if (expression === '') {
+                currentDisplay.innerText = '0';
+            } else {
+                // Formatting teks visual agar rapi dibaca manusia
+                let visualText = expression
+                    .replace(/\*/g, '×')
+                    .replace(/\//g, '÷')
+                    .replace(/Math\.sin\(/g, 'sin(')
+                    .replace(/Math\.cos\(/g, 'cos(')
+                    .replace(/Math\.tan\(/g, 'tan(')
+                    .replace(/Math\.sqrt\(/g, '√(')
+                    .replace(/Math\.log10\(/g, 'log(')
+                    .replace(/Math\.log\(/g, 'ln(')
+                    .replace(/Math\.PI/g, 'π')
+                    .replace(/\*\*/g, '^');
+                currentDisplay.innerText = visualText;
+            }
+        }
+
+        function appendNumber(num) {
+            if (num === '.' && expression.endsWith('.')) return;
+            expression += num;
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (expression === '') return;
+            if (['+', '-', '*', '/', '**'].includes(expression.slice(-1))) {
+                expression = expression.slice(0, -1) + op;
+            } else {
+                expression += op;
+            }
+            updateDisplay();
+        }
+
+        function appendScientific(func) {
+            expression += func + '(';
+            updateDisplay();
+        }
+
+        function clearAll() {
+            expression = '';
+            previousDisplay.innerText = '';
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            expression = expression.slice(0, -1);
+            updateDisplay();
+        }
+
+        // FUNGSI PERHITUNGAN INTI CORE v6.0
+        function calculate() {
+            if (expression === '') return;
+            
+            try {
+                let checkExpression = expression;
+                // Menutup kurung otomatis jika user lupa menutup rumus sains
+                const openBrackets = (checkExpression.match(/\(/g) || []).length;
+                const closeBrackets = (checkExpression.match(/\)/g) || []).length;
+                if (openBrackets > closeBrackets) {
+                    checkExpression += ')'.repeat(openBrackets - closeBrackets);
+                }
+
+                previousDisplay.innerText = currentDisplay.innerText + ' =';
+                
+                // Kalkulasi super aman dengan JavaScript Function Context
+                let result = new Function(`return ${checkExpression}`)();
+                
+                if (result % 1 !== 0) {
+                    result = parseFloat(result.toFixed(6)); // Batasi desimal agar tidak overflow layar
+                }
+
+                // Tambahkan ke sistem Riwayat Log
+                addHistory(currentDisplay.innerText, result);
+
+                expression = result.toString();
+                updateDisplay();
+            } catch (error) {
+                currentDisplay.innerText = 'Error Rumus';
+                expression = '';
+            }
+        }
+
+        // MANAJEMEN RIWAYAT (HISTORY LEDGER)
+        function addHistory(exp, res) {
+            historyData.push({ exp, res });
+            if(historyData.length > 5) historyData.shift(); // Batasi hanya 5 riwayat terakhir
+            
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (historyData.length === 0) {
+                historyList.innerHTML = '<p class="text-slate-600 text-center py-2">Belum ada riwayat.</p>';
+                return;
+            }
+
+            historyList.innerHTML = historyData.map((item, index) => `
+                <div onclick="useHistory('${item.res}')" class="p-1.5 rounded hover:bg-slate-800/50 cursor-pointer border-b border-slate-900/40 text-left flex justify-between items-center group">
+                    <span class="text-slate-500 truncate max-w-[200px] font-mono">${item.exp}</span>
+                    <span class="text-blue-400 font-bold group-hover:underline font-mono">${item.res}</span>
+                </div>
+            `).join('');
+        }
+
+        function useHistory(value) {
+            expression = value;
+            updateDisplay();
+        }
+
+        function clearHistory() {
+            historyData = [];
+            renderHistory();
+        }
+
+        function toggleHistory() {
+            historyPanel.classList.toggle('hidden');
+        }
+
+        // SWITCH MODE: STANDARD & SCIENTIFIC
+        function switchMode(mode) {
+            const btnStd = document.getElementById('btnStd');
+            const btnSci = document.getElementById('btnSci');
+            
+            if (mode === 'scientific') {
+                scientificPanel.classList.remove('hidden');
+                modeIndicator.innerText = "SCIENTIFIC";
+                modeIndicator.className = "absolute left-4 top-3 text-[10px] uppercase font-bold tracking-widest text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded-full";
+                btnSci.className = "flex-1 text-xs py-2 rounded-lg font-bold transition bg-purple-600 text-white cursor-pointer";
+                btnStd.className = "flex-1 text-xs py-2 rounded-lg font-bold transition text-slate-400 hover:text-slate-200 cursor-pointer";
+            } else {
+                scientificPanel.classList.add('hidden');
+                modeIndicator.innerText = "STANDARD";
+                modeIndicator.className = "absolute left-4 top-3 text-[10px] uppercase font-bold tracking-widest text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full";
+                btnStd.className = "flex-1 text-xs py-2 rounded-lg font-bold transition bg-blue-600 text-white cursor-pointer";
+                btnSci.className = "flex-1 text-xs py-2 rounded-lg font-bold transition text-slate-400 hover:text-slate-200 cursor-pointer";
+            }
+        }
+
+        // MULTI-THEMING SYSTEM ENGINE
+        function changeTheme(theme) {
+            const body = document.getElementById('bodyBg');
+            const container = document.getElementById('calcContainer');
+            const brandIcon = document.getElementById('brandIcon');
+            const btnEquals = document.getElementById('btnEquals');
+            const btnStd = document.getElementById('btnStd');
+            const ops = document.querySelectorAll('.btn-op');
+
+            // Reset Kelas Dasar Glow
+            container.className = "my-auto w-full max-w-md backdrop-blur-2xl border rounded-3xl p-5 shadow-2xl transition-all duration-500 ";
+
+            if (theme === 'cyberpunk') {
+                body.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between items-center font-sans p-4 select-none";
+                container.classList.add('bg-slate-900/80', 'border-slate-800', 'glow-blue');
+                brandIcon.className = "bg-blue-600/20 p-1.5 rounded-lg text-blue-400";
+                btnEquals.className = "row-span-2 bg-gradient-to-b from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white p-4 rounded-2xl flex justify-center items-center shadow-lg shadow-blue-500/20 font-bold cursor-pointer";
+                ops.forEach(el => el.className = "calc-btn btn-op bg-slate-800 hover:bg-slate-700/80 text-blue-400 p-4 rounded-2xl font-bold cursor-pointer");
+                switchMode(scientificPanel.classList.contains('hidden') ? 'standard' : 'scientific');
+            } 
+            else if (theme === 'purple') {
+                body.className = "bg-zinc-950 text-purple-50 min-h-screen flex flex-col justify-between items-center font-sans p-4 select-none";
+                container.classList.add('bg-purple-950/20', 'border-purple-900/40', 'glow-purple');
+                brandIcon.className = "bg-purple-600/20 p-1.5 rounded-lg text-purple-400";
+                btnEquals.className = "row-span-2 bg-gradient-to-b from-purple-600 to-fuchsia-700 hover:from-purple-500 hover:to-fuchsia-600 text-white p-4 rounded-2xl flex justify-center items-center shadow-lg shadow-purple-500/20 font-bold cursor-pointer";
+                ops.forEach(el => el.className = "calc-btn btn-op bg-purple-900/20 hover:bg-purple-900/40 text-purple-400 p-4 rounded-2xl font-bold cursor-pointer");
+            } 
+            else if (theme === 'matrix') {
+                body.className = "bg-black text-emerald-400 min-h-screen flex flex-col justify-between items-center font-mono p-4 select-none";
+                container.classList.add('bg-neutral-950', 'border-emerald-900', 'glow-green');
+                brandIcon.className = "bg-emerald-600/20 p-1.5 rounded-lg text-emerald-400";
+                btnEquals.className = "row-span-2 bg-emerald-600 hover:bg-emerald-500 text-black p-4 rounded-2xl flex justify-center items-center shadow-lg shadow-emerald-500/20 font-bold cursor-pointer";
+                ops.forEach(el => el.className = "calc-btn btn-op bg-zinc-900 hover:bg-zinc-800 text-emerald-400 p-4 rounded-2xl font-bold cursor-pointer");
+            } 
+            else if (theme === 'light') {
+                body.className = "bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between items-center font-sans p-4 select-none";
+                container.classList.add('bg-white', 'border-slate-200', 'shadow-xl');
+                brandIcon.className = "bg-blue-100 p-1.5 rounded-lg text-blue-600";
+                btnEquals.className = "row-span-2 bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl flex justify-center items-center shadow-md font-bold cursor-pointer";
+                ops.forEach(el => el.className = "calc-btn btn-op bg-slate-100 hover:bg-slate-200 text-blue-600 p-4 rounded-2xl font-bold cursor-pointer");
+            }
+        }
+
+        // OPERASI AMAN KONTROL MEMORI (MC, MR, M+, M-)
+        function handleMemory(action) {
+            let currentVal = parseFloat(currentDisplay.innerText) || 0;
+            if (action === 'MC') {
+                memoryValue = 0;
+                memoryIndicator.classList.add('hidden');
+            } else if (action === 'MR') {
+                expression = memoryValue.toString();
+                updateDisplay();
+            } else if (action === 'M+') {
+                memoryValue += currentVal;
+                memoryIndicator.classList.remove('hidden');
+            } else if (action === 'M-') {
+                memoryValue -= currentVal;
+                memoryIndicator.classList.remove('hidden');
+            }
+        }
+
+        // SISTEM INPUT KEYBOARD INTEGRATED
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+            if (!isNaN(key)) appendNumber(key);
+            if (['+', '-', '*', '/'].includes(key)) appendOperator(key);
+            if (key === '.') appendNumber('.');
+            if (key === 'Enter' || key === '=') calculate();
+            if (key === 'Backspace') deleteLast();
+            if (key === 'Escape') clearAll();
+        });
+    </script>
+</body>
+</html>
